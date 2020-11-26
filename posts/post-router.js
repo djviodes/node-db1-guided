@@ -5,7 +5,7 @@ const db = require("../data/db-config.js");
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
     // SELECT * FROM posts
     const posts = await db.select("*").from("posts");
@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", async (req, res, next) => {
   try {
     // SELECT * FROM posts WHERE id = req.params.id LIMIT 1
     const [post] = await db
@@ -31,7 +31,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   try {
     const payload = {
       title: req.body.title,
@@ -56,12 +56,13 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const payload = {
         title: req.body.title,
         contents: req.body.contents,
       };
+
       if (!payload.title || !payload.contents) {
         return res.status(400).json({
           message: "Need a title and contents",
@@ -69,7 +70,7 @@ router.put("/:id", async (req, res) => {
       }
 
       // UPDATE posts SET title = ? AND contents = ? WHERE id = ?
-      await db('posts').where(req.params.id).update(payload)
+      await db('posts').where("id", req.params.id).update(payload)
 
       const post = await db
         .first("*") // A shortcut for destructuring the array and limit 1
@@ -82,9 +83,12 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req, res, next) => {
   try {
+    // DELETE FROM posts WHERE id = ?
+    await db('posts').where('id', req.params.id).del()
 
+    res.status(204).end()
   } catch (err) {
     next(err);
   }
